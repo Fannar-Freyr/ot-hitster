@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/set-state-in-effect */
 import { checkIfWinner } from '@/utils/db/players';
 import { useEffect, useState } from 'react';
