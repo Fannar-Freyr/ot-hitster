@@ -70,7 +70,7 @@ export default function GuessingPlayer({
         const source = event.operation.source;
         const target = event.operation.target;
         if (source && target) {
-          const index = source.index;
+          const index = source.data.index as number;
           const start = songs[index - 1];
           const end = songs[index];
           console.log(guess);
