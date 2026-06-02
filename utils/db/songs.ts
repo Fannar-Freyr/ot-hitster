@@ -11,6 +11,7 @@ interface fetchUnusedSongsProps {
 
 export interface Song {
 	id: string;
+	spotify_id: string;
 	title: string;
 	artist: string;
 	year: number;

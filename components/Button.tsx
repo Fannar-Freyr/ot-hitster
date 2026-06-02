@@ -5,6 +5,7 @@ interface ButtonProps {
   href?: string;
   onClick?: () => void;
   className?: string;
+  disabled?: boolean;
 }
 
 const buttonStyle =
@@ -15,6 +16,7 @@ export default function Button({
   href,
   onClick,
   className,
+  disabled,
 }: ButtonProps): React.JSX.Element {
   if (href) {
     return (
@@ -27,7 +29,10 @@ export default function Button({
   }
 
   return (
-    <div className={`${buttonStyle} ${className ?? ''}`} onClick={onClick}>
+    <div
+      className={`${buttonStyle} ${className ?? ''} ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
+      onClick={disabled ? undefined : onClick}
+    >
       {children}
     </div>
   );

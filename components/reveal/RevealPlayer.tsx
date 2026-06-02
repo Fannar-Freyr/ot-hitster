@@ -32,7 +32,6 @@ export default function RevealPlayer({
     <div
       className={`flex flex-col items-center justify-center min-h-screen py-2 ${guess?.correct ? 'bg-green-500' : 'bg-red-500'}`}
     >
-      <h1 className="text-6xl font-bold mb-4">{game.round}</h1>
       {guess ? (
         <h1 className="text-6xl font-bold mb-4">
           {guess.correct ? 'Correct!' : 'Wrong'}

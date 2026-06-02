@@ -1,22 +1,26 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabase } from '@/utils/db/supabase';
 import Button from '../Button';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import TeamCard from '../TeamCard';
 import { fetchPlayers, updatePlayerScore } from '@/utils/db/players';
-import { updateGameStatus } from '@/utils/db/game';
 import { getCurrentRound } from '@/utils/db/rounds';
 import { handleGameStatusChange } from '@/utils/gameManager';
 import { getSong } from '@/utils/db/songs';
 import { createGuesses } from '@/utils/db/guesses';
 import { insertSongOwners } from '@/utils/db/songOwners';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// Persisted across remounts so the Spotify device stays registered and ready.
+let cachedPlayer: any = null;
+let cachedDeviceId: string | null = null;
+
 export default function GuessingScreen({ gameId }: { gameId: string }) {
   const [players, setPlayers] = useState<any[]>([]);
   const [currentSong, setCurrentSong] = useState<any>(null);
   const [currentRound, setCurrentRound] = useState<any>(null);
+  const [deviceId, setDeviceId] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const playerRef = useRef<any>(null);
 
   const fetchSong = async (songId: string) => {
     getSong(songId).then(song => {
@@ -27,14 +31,17 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
   const checkGuesses = () => {
     const guesses = [];
     for (const player of players) {
+      const boilerplate = {
+        player_id: player.id,
+        game_id: gameId,
+        round_id: currentRound.id,
+        song_id: currentRound.song_id,
+        round: currentRound.round,
+      };
       if (!player.guess) {
         console.log(`Player ${player.name} has not made a guess yet.`);
         guesses.push({
-          player_id: player.id,
-          game_id: gameId,
-          round_id: currentRound.id,
-          round: currentRound.round,
-          song_id: currentRound.song_id,
+          ...boilerplate,
           correct: false,
         });
         continue;
@@ -42,11 +49,7 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
       if (player.guess[0] <= currentSong.year && player.guess[1] >= currentSong.year) {
         console.log(`Correct guess from ${player.name}!`);
         guesses.push({
-          player_id: player.id,
-          game_id: gameId,
-          round_id: currentRound.id,
-          round: currentRound.round,
-          song_id: currentRound.song_id,
+          ...boilerplate,
           correct: true,
         });
         insertSongOwners([
@@ -60,11 +63,7 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
       } else {
         console.log(`Wrong guess from ${player.name}!`);
         guesses.push({
-          player_id: player.id,
-          game_id: gameId,
-          round_id: currentRound.id,
-          round: currentRound.round,
-          song_id: currentRound.song_id,
+          ...boilerplate,
           correct: false,
         });
       }
@@ -74,8 +73,80 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
   };
 
   useEffect(() => {
-    fetchPlayers({ gameId }).then(players => {
-      setPlayers(players || []);
+    const spotifyToken = localStorage.getItem('spotifyToken');
+
+    const attachListeners = (player: any) => {
+      // Remove old listeners first to avoid duplicates on remount.
+      player.removeListener('ready');
+      player.removeListener('not_ready');
+      player.removeListener('player_state_changed');
+
+      player.addListener('ready', ({ device_id }: any) => {
+        console.log('Ready with Device ID', device_id);
+        cachedDeviceId = device_id;
+        setDeviceId(device_id);
+      });
+
+      player.addListener('not_ready', ({ device_id }: any) => {
+        console.log('Device ID has gone offline', device_id);
+        cachedDeviceId = null;
+        setDeviceId(null);
+      });
+
+      player.addListener('player_state_changed', (state: any) => {
+        if (!state) return;
+        setIsPlaying(!state.paused);
+      });
+    };
+
+    const initPlayer = () => {
+      if (cachedPlayer) {
+        // Reuse the existing connected player — no disconnect/reconnect cycle.
+        playerRef.current = cachedPlayer;
+        attachListeners(cachedPlayer);
+        // Restore deviceId from cache so the button is immediately enabled.
+        if (cachedDeviceId) setDeviceId(cachedDeviceId);
+        return;
+      }
+
+      const player = new (window as any).Spotify.Player({
+        name: 'OT Hitster Player',
+        getOAuthToken: (cb: any) => {
+          cb(spotifyToken);
+        },
+        volume: 1,
+      });
+
+      cachedPlayer = player;
+      playerRef.current = player;
+      attachListeners(player);
+      player.connect();
+    };
+
+    if ((window as any).Spotify) {
+      initPlayer();
+    } else {
+      (window as any).onSpotifyWebPlaybackSDKReady = initPlayer;
+
+      const existingScript = document.getElementById('spotify-sdk');
+      if (!existingScript) {
+        const script = document.createElement('script');
+        script.id = 'spotify-sdk';
+        script.src = 'https://sdk.scdn.co/spotify-player.js';
+        script.async = true;
+        document.body.appendChild(script);
+      }
+    }
+
+    return () => {
+      // Do not disconnect — keep the device registered with Spotify across remounts.
+      playerRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    fetchPlayers({ gameId }).then(fetchedPlayers => {
+      setPlayers(fetchedPlayers || []);
     });
     getCurrentRound({ gameId }).then(round => {
       fetchSong(round.song_id);
@@ -86,7 +157,6 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
       .channel(`guessing-screen-${gameId}`)
       .on('broadcast', { event: 'guess_confirmed' }, message => {
         console.log('Guess confirmed by player:', message.payload.playerId);
-
         setPlayers(prev =>
           prev.map(p =>
             p.id === message.payload.playerId
@@ -115,13 +185,38 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
     };
   }, [gameId]);
 
+  const play = async () => {
+    if (!deviceId || !currentSong) return;
+    const spotifyToken = localStorage.getItem('spotifyToken');
+    if (!spotifyToken) return;
+
+    const trackUri = `spotify:track:${currentSong.spotify_id}`;
+
+    await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${spotifyToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ uris: [trackUri] }),
+    });
+  };
+
+  const togglePlayPause = () => {
+    if (!playerRef.current) return;
+    playerRef.current.togglePlay();
+  };
+
+  useEffect(() => {
+    if (deviceId && currentSong) {
+      play();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deviceId, currentSong]);
+
   const reveal = async () => {
-    // supabase.channel(`guessing-screen-${gameId}`).send({
-    //   type: 'broadcast',
-    //   event: 'reveal',
-    //   payload: { revealing: true },
-    // });
     checkGuesses();
+    playerRef.current.pause();
     handleGameStatusChange({ gameId });
   };
 
@@ -132,21 +227,29 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
           Reveal
         </Button>
       </div>
-      <h1 className="text-6xl font-bold mb-4">A song is playing</h1>
+      <h1 className="text-5xl font-bold mb-4">[ Cool animation or something ]</h1>
+
       {currentSong && (
-        <>
-          <h1 className="text-2xl font-bold mb-4">{currentSong.title}</h1>
-          <h1 className="text-2xl font-bold mb-4">{currentSong.artist}</h1>
-          <h1 className="text-2xl font-bold mb-4">{currentSong.year}</h1>
-        </>
+        <h1 className="text-lg font-bold mb-4">
+          {currentSong.title} - {currentSong.artist} - {currentSong.year} 🤫
+        </h1>
       )}
-      <div className="flex flex-row flex-wrap justify-center">
+      <div className="flex gap-3 mb-6">
+        <Button
+          className="bg-yellow-500 hover:bg-yellow-400 text-white px-6 py-2"
+          onClick={togglePlayPause}
+          disabled={!deviceId}
+        >
+          {isPlaying ? '⏸ Pause' : '▶ Resume'}
+        </Button>
+      </div>
+      <div className="flex flex-row flex-wrap justify-center fixed bottom-0">
         {players
           .filter(player => !player.is_dj)
           .map(player => (
             <TeamCard
               key={player.id}
-              name={`${player.has_confirmed ? '✅' : '🤔'} ${player.name}`}
+              name={`${player.has_confirmed ? '🔒' : '🔓'} ${player.name}`}
             />
           ))}
       </div>

@@ -99,9 +99,13 @@ export default function GuessingPlayer({
       >
         <div className="flex justify-center items-center h-16 bg-black text-white w-full fixed bottom-0">
           <div className="text-lg font-bold">
-            <Button onClick={handleConfirm}>
-              {hasConfirmed ? 'Confirmed!' : 'Confirm'}
-            </Button>
+            {guess.length === 0 ? (
+              'Make your guess!'
+            ) : (
+              <Button onClick={handleConfirm}>
+                {hasConfirmed ? 'Confirmed!' : 'Confirm'}
+              </Button>
+            )}
           </div>
         </div>
         <Hand>
