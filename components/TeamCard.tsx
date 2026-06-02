@@ -1,7 +1,13 @@
+import { motion } from 'motion/react';
 export default function TeamCard({ name }: { name: string }) {
   return (
-    <div className="m-4 py-2 px-3 bg-slate-50 text-slate-900 rounded-xl text-2xl">
+    <motion.div
+      initial={{ scale: 0 }}
+      animate={{ scale: 1 }}
+      layout
+      className="m-4 py-2 px-3 bg-white text-black rounded-xl text-3xl"
+    >
       {name}
-    </div>
+    </motion.div>
   );
 }

@@ -16,6 +16,7 @@ export default function CreateGame() {
   const [loading, setLoading] = useState(true);
   const [spotifyPlaylists, setSpotifyPlaylists] = useState([]);
   const [selected, setSelected] = useState<any>(null);
+  const [numPoints, setNumPoints] = useState<number>(5);
 
   const fetchSpotifyPlaylists = async () => {
     if (!spotifyToken) return;
@@ -90,7 +91,7 @@ export default function CreateGame() {
 
     console.log(playlist);
 
-    const result = await createGame({ playlist });
+    const result = await createGame({ playlist, winCondition: numPoints });
 
     if (!result) {
       console.error('Failed to create game with selected playlist!', selected.id);
@@ -138,14 +139,25 @@ export default function CreateGame() {
                     className="w-12 h-12 object-cover rounded-l-lg"
                   />
                 )}
-                <div>
-                  <h2 className="text-lg font-semibold ml-4">{playlist.name}</h2>
-                  {/* <p className="text-gray-600">{playlist.tracks.total} songs</p> */}
+                <div className="flex flex-row w-full items-center justify-between">
+                  <p className="text-lg font-semibold ml-4">{playlist.name}</p>
+                  <p className="text-md mr-4">{playlist.items.total} songs</p>
                 </div>
               </div>
             ))}
           </div>
-          {selected && <h1 className="text-lg">Selected playlist: {selected.name}</h1>}
+          {selected && (
+            <>
+              <p className="text-lg">Selected playlist: {selected.name}</p>
+              <input
+                type="number"
+                placeholder="Number of points (default 10)"
+                defaultValue={5}
+                className="border rounded-lg p-2 w-48 mb-4"
+                onChange={e => setNumPoints(Number(e.target.value))}
+              />
+            </>
+          )}
           <Button onClick={handleCreateGame}>Create a game</Button>
         </div>
       )}

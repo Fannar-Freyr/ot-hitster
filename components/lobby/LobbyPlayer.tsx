@@ -13,9 +13,7 @@ export default function LobbyPlayer({
 }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-2">
-      <h1 className="text-6xl font-bold mb-4">
-        {'Waiting for the DJ to do their thing'}
-      </h1>
+      <h1 className="text-4xl font-bold mb-4">{'Waiting for the DJ'}</h1>
       <Button
         onClick={() => {
           supabase.channel(`lobby-screen-${gameId}`).send({

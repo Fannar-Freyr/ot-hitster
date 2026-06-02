@@ -21,6 +21,7 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const playerRef = useRef<any>(null);
+  const lastPlayedSongIdRef = useRef<string | null>(null);
 
   const fetchSong = async (songId: string) => {
     getSong(songId).then(song => {
@@ -200,15 +201,16 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
       },
       body: JSON.stringify({ uris: [trackUri] }),
     });
+    console.log(trackUri, 'song is playing');
   };
-
   const togglePlayPause = () => {
     if (!playerRef.current) return;
     playerRef.current.togglePlay();
   };
 
   useEffect(() => {
-    if (deviceId && currentSong) {
+    if (deviceId && currentSong && lastPlayedSongIdRef.current !== currentSong.id) {
+      lastPlayedSongIdRef.current = currentSong.id;
       play();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -229,12 +231,12 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
       </div>
       <h1 className="text-5xl font-bold mb-4">[ Cool animation or something ]</h1>
 
-      {currentSong && (
+      {/* {currentSong && (
         <h1 className="text-lg font-bold mb-4">
           {currentSong.title} - {currentSong.artist} - {currentSong.year} 🤫
         </h1>
-      )}
-      <div className="flex gap-3 mb-6">
+      )} */}
+      {/* <div className="flex gap-3 mb-6">
         <Button
           className="bg-yellow-500 hover:bg-yellow-400 text-white px-6 py-2"
           onClick={togglePlayPause}
@@ -242,8 +244,8 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
         >
           {isPlaying ? '⏸ Pause' : '▶ Resume'}
         </Button>
-      </div>
-      <div className="flex flex-row flex-wrap justify-center fixed bottom-0">
+      </div> */}
+      <div className="flex flex-row flex-wrap justify-center fixed bottom-4">
         {players
           .filter(player => !player.is_dj)
           .map(player => (

@@ -12,6 +12,8 @@
     "@dnd-kit/react": "^0.4.0",
     "@hello-pangea/dnd": "^18.0.1",
     "@supabase/supabase-js": "^2.105.4",
+    "colorthief": "^3.3.1",
+    "motion": "^12.40.0",
     "next": "16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4"
