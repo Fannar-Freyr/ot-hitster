@@ -4,6 +4,7 @@ import { supabase } from '@/utils/db/supabase';
 import Button from '@/components/Button';
 import { useRouter } from 'next/navigation';
 import { generateRoomCode } from '@/utils/generateRoomCode';
+import { AnimatePresence } from 'motion/react';
 
 export default function Lobby() {
   const [name, setName] = useState<string>('');

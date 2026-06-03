@@ -9,6 +9,9 @@ import { handleGameStatusChange } from '@/utils/gameManager';
 import { getSong } from '@/utils/db/songs';
 import { createGuesses } from '@/utils/db/guesses';
 import { insertSongOwners } from '@/utils/db/songOwners';
+import { getSpotifyToken } from '@/utils/spotify';
+import { motion } from 'motion/react';
+import PageContainer from '../PageContainer';
 
 // Persisted across remounts so the Spotify device stays registered and ready.
 let cachedPlayer: any = null;
@@ -74,8 +77,6 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
   };
 
   useEffect(() => {
-    const spotifyToken = localStorage.getItem('spotifyToken');
-
     const attachListeners = (player: any) => {
       // Remove old listeners first to avoid duplicates on remount.
       player.removeListener('ready');
@@ -112,8 +113,8 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
 
       const player = new (window as any).Spotify.Player({
         name: 'OT Hitster Player',
-        getOAuthToken: (cb: any) => {
-          cb(spotifyToken);
+        getOAuthToken: async (cb: any) => {
+          cb(await getSpotifyToken());
         },
         volume: 1,
       });
@@ -188,7 +189,7 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
 
   const play = async () => {
     if (!deviceId || !currentSong) return;
-    const spotifyToken = localStorage.getItem('spotifyToken');
+    const spotifyToken = await getSpotifyToken();
     if (!spotifyToken) return;
 
     const trackUri = `spotify:track:${currentSong.spotify_id}`;
@@ -223,7 +224,7 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-2">
+    <PageContainer>
       <div className="fixed top-0 right-0 p-4">
         <Button className="bg-slate-600 text-amber-200" onClick={reveal}>
           Reveal
@@ -255,6 +256,6 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
             />
           ))}
       </div>
-    </div>
+    </PageContainer>
   );
 }

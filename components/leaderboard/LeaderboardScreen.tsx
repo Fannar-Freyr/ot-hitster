@@ -7,6 +7,7 @@ import Loading from '../Loading';
 import { updateGameStatus } from '@/utils/db/game';
 import { fetchPlayers } from '@/utils/db/players';
 import { handleGameStatusChange } from '@/utils/gameManager';
+import PageContainer from '../PageContainer';
 
 export default function LeaderboardScreen({
   gameId,
@@ -30,7 +31,7 @@ export default function LeaderboardScreen({
   if (players.length === 0) return null;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-2">
+    <PageContainer>
       <div className="fixed top-0 right-0 p-4">
         <Button className="bg-slate-600 text-amber-200" onClick={goToNextSong}>
           Next song
@@ -47,6 +48,6 @@ export default function LeaderboardScreen({
             </div>
           ))}
       </div>
-    </div>
+    </PageContainer>
   );
 }

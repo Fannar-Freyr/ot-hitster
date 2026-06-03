@@ -48,6 +48,7 @@ export default function CreateGame() {
       if (session?.provider_token) {
         setSpotifyToken(session.provider_token);
         localStorage.setItem('spotifyToken', session.provider_token);
+        localStorage.setItem('spotifyTokenStoredAt', String(Date.now()));
       }
       setLoading(false);
     };

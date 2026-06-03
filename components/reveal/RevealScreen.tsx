@@ -7,8 +7,9 @@ import Button from '../Button';
 import { handleGameStatusChange } from '@/utils/gameManager';
 import { useEffect, useState } from 'react';
 import { getCurrentRound } from '@/utils/db/rounds';
+import { getSpotifyToken } from '@/utils/spotify';
 import { Song } from '@/utils/db/songs';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function RevealScreen({ gameId, game }: { gameId: string; game: any }) {
@@ -24,7 +25,7 @@ export default function RevealScreen({ gameId, game }: { gameId: string; game: a
     getCurrentRound({ gameId }).then(async round => {
       setSong(round.songs);
       console.log(round.songs);
-      const spotifyToken = localStorage.getItem('spotifyToken');
+      const spotifyToken = await getSpotifyToken();
       // Fetch song from Spotify
       try {
         const response = await fetch(
@@ -69,7 +70,11 @@ export default function RevealScreen({ gameId, game }: { gameId: string; game: a
     textColor === '#ffffff' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)';
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
       style={{ background: bgGradient }}
       className="flex items-center justify-center min-h-screen w-full px-20 gap-20"
     >
@@ -119,7 +124,7 @@ export default function RevealScreen({ gameId, game }: { gameId: string; game: a
           </span>
         </div>
       </motion.div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -142,7 +147,7 @@ function createLayeredGradient(colors: any, options = { angle: 135 }) {
     // Works if user passes rgb/rgba, otherwise fallback
     if (color.startsWith('rgb')) {
       return color.replace(/rgba?\(([^)]+)\)/, (_, values: any) => {
-        const parts = values.split(',').map(v => v.trim());
+        const parts = values.split(',').map((v: string) => v.trim());
         return `rgba(${parts.slice(0, 3).join(', ')}, ${alpha})`;
       });
     }
