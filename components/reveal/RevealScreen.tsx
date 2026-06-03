@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable jsx-a11y/alt-text */
 /* eslint-disable @next/next/no-img-element */
-import { getColor, getPalette } from 'colorthief';
+import { getColor, getPalette, getPaletteSync, getSwatchesSync } from 'colorthief';
 import { supabase } from '@/utils/db/supabase';
 import Button from '../Button';
 import { handleGameStatusChange } from '@/utils/gameManager';
@@ -45,7 +45,7 @@ export default function RevealScreen({ gameId, game }: { gameId: string; game: a
           img.onload = resolve;
           img.onerror = reject;
         });
-        const palette = await getPalette(img, {
+        const palette = getPaletteSync(img, {
           colorCount: 5,
         });
         console.log(palette);
@@ -63,7 +63,7 @@ export default function RevealScreen({ gameId, game }: { gameId: string; game: a
 
   if (!palette || !spotifySong || !song) return null;
 
-  const bgGradient = `linear-gradient(135deg, ${palette[0].hex()} 0%, ${palette[2].hex()} 60%, ${palette[4].hex()} 100%)`;
+  const bgGradient = createLayeredGradient(palette.map((c: any) => c.css('oklch')));
   const textColor = palette[0].textColor;
   const subtleColor =
     textColor === '#ffffff' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)';
@@ -79,9 +79,9 @@ export default function RevealScreen({ gameId, game }: { gameId: string; game: a
 
       {/* Album artwork */}
       <motion.img
-        initial={{ opacity: 1, scale: 1, x: -1000 }}
-        animate={{ opacity: 1, scale: 1, x: 0 }}
-        transition={{ duration: 0.5 }}
+        initial={{ opacity: 0.8, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1 }}
         // transition={{ duration: 0.8, ease: 'easeOut' }}
         src={spotifySong.album.images[0].url}
         className="rounded-3xl shadow-2xl shrink-0"
@@ -89,7 +89,12 @@ export default function RevealScreen({ gameId, game }: { gameId: string; game: a
       />
 
       {/* Song info */}
-      <div className="flex flex-col justify-center gap-6 min-w-0">
+      <motion.div
+        initial={{ x: -100 }}
+        animate={{ x: 0 }}
+        transition={{ duration: 1 }}
+        className="flex flex-col justify-center gap-6 min-w-0"
+      >
         <p
           style={{ color: subtleColor }}
           className="text-2xl uppercase tracking-[0.3em] font-medium"
@@ -113,7 +118,46 @@ export default function RevealScreen({ gameId, game }: { gameId: string; game: a
             {song.year}
           </span>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
+}
+
+/**
+ * Creates a layered CSS gradient from 3–5 colors
+ * @param {string[]} colors - Array of CSS color strings (length 3–5)
+ * @param {object} options - Optional config
+ * @param {number} options.angle - Base angle of gradients (default 135)
+ * @returns {string} CSS background value
+ */
+function createLayeredGradient(colors: any, options = { angle: 135 }) {
+  if (!Array.isArray(colors) || colors.length < 3 || colors.length > 5) {
+    throw new Error('Provide an array of 3 to 5 CSS color strings.');
+  }
+
+  const angle = options.angle;
+
+  // Helper to add transparency to colors (simple approach)
+  const withAlpha = (color: string, alpha: number) => {
+    // Works if user passes rgb/rgba, otherwise fallback
+    if (color.startsWith('rgb')) {
+      return color.replace(/rgba?\(([^)]+)\)/, (_, values: any) => {
+        const parts = values.split(',').map(v => v.trim());
+        return `rgba(${parts.slice(0, 3).join(', ')}, ${alpha})`;
+      });
+    }
+    return color; // fallback for hex/named colors
+  };
+
+  // Create layered gradients with slight angle + opacity variations
+  const layers = colors.map((color, i) => {
+    const nextColor = colors[i + 1] || colors[0];
+    const layerAngle = angle + i * 20;
+    const start = withAlpha(color, 0.8 - i * 0.1);
+    const end = withAlpha(nextColor, 0.8 - i * 0.1);
+
+    return `linear-gradient(${layerAngle}deg, ${start}, ${end})`;
+  });
+
+  return layers.join(', ');
 }

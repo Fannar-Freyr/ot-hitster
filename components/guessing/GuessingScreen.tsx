@@ -218,7 +218,7 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
 
   const reveal = async () => {
     checkGuesses();
-    playerRef.current.pause();
+    // playerRef.current.pause();
     handleGameStatusChange({ gameId });
   };
 
@@ -236,7 +236,7 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
           {currentSong.title} - {currentSong.artist} - {currentSong.year} 🤫
         </h1>
       )} */}
-      {/* <div className="flex gap-3 mb-6">
+      <div className="flex gap-3 mb-6">
         <Button
           className="bg-yellow-500 hover:bg-yellow-400 text-white px-6 py-2"
           onClick={togglePlayPause}
@@ -244,7 +244,7 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
         >
           {isPlaying ? '⏸ Pause' : '▶ Resume'}
         </Button>
-      </div> */}
+      </div>
       <div className="flex flex-row flex-wrap justify-center fixed bottom-4">
         {players
           .filter(player => !player.is_dj)
