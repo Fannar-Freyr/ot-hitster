@@ -29,3 +29,19 @@ export const getGuess = async ({ playerId, gameId, round }: { playerId: string; 
 
 	return guess;
 }
+
+export const getGuessesForRound = async ({ gameId, round }: { gameId: string; round: number }) => {
+	const { data: guesses, error } = await supabase
+		.from('guesses')
+		.select('*')
+		.eq('game_id', gameId)
+		.eq('round', round);
+
+	if (error) {
+		console.error(`Error fetching guesses for game ${gameId} round ${round}`, error);
+		return;
+	}
+
+	return guesses;
+}
+		

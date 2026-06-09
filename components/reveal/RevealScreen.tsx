@@ -49,6 +49,7 @@ export default function RevealScreen({ gameId, game }: { gameId: string; game: a
         const palette = getPaletteSync(img, {
           colorCount: 5,
         });
+        if (!palette) throw new Error('Could not extract palette from image');
         console.log(palette);
         setPalette(palette);
         console.log(spotifyData);
@@ -65,9 +66,11 @@ export default function RevealScreen({ gameId, game }: { gameId: string; game: a
   if (!palette || !spotifySong || !song) return null;
 
   const bgGradient = createLayeredGradient(palette.map((c: any) => c.css('oklch')));
-  const textColor = palette[0].textColor;
-  const subtleColor =
-    textColor === '#ffffff' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)';
+  const textColor = '#ffffff';
+  // const textColor = palette[0].textColor;
+  // const subtleColor =
+  //   textColor === '#ffffff' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)';
+  const subtleColor = 'rgba(255, 255, 255, .5)';
 
   return (
     <motion.div
@@ -75,8 +78,7 @@ export default function RevealScreen({ gameId, game }: { gameId: string; game: a
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
-      style={{ background: bgGradient }}
-      className="flex items-center justify-center min-h-screen w-full px-20 gap-20"
+      className="flex items-center justify-center min-h-screen bg-transparent w-full px-20 gap-20"
     >
       <div className="fixed top-0 right-0 p-4">
         <Button onClick={goToLeaderboard}>Leaderboard</Button>

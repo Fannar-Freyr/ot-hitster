@@ -19,14 +19,29 @@ export default function GuessingPlayer({
   const [emptyTitle, setEmptyTitle] = useState<string>('????');
   const [guess, setGuess] = useState<number[]>([]);
   const [hasConfirmed, setHasConfirmed] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [songs, setSongs] = useState<any[]>([]);
 
   const handleConfirm = () => {
-    setHasConfirmed(!hasConfirmed);
+    if (hasConfirmed) {
+      setHasConfirmed(false);
+      supabase.channel(`guessing-screen-${gameId}`).send({
+        type: 'broadcast',
+        event: 'guess_confirmed',
+        payload: { playerId: playerId, has_confirmed: false },
+      });
+    } else {
+      setShowConfirmDialog(true);
+    }
+  };
+
+  const handleConfirmYes = () => {
+    setShowConfirmDialog(false);
+    setHasConfirmed(true);
     supabase.channel(`guessing-screen-${gameId}`).send({
       type: 'broadcast',
       event: 'guess_confirmed',
-      payload: { playerId: playerId, has_confirmed: !hasConfirmed },
+      payload: { playerId: playerId, has_confirmed: true },
     });
   };
 
@@ -93,6 +108,27 @@ export default function GuessingPlayer({
         handleGuessing();
       }}
     >
+      {showConfirmDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl p-8 flex flex-col items-center gap-6 shadow-xl">
+            <p className="text-2xl font-bold text-black">Are you sure?</p>
+            <div className="flex gap-4">
+              <div
+                className="rounded-xl px-6 py-2 text-xl cursor-pointer select-none bg-emerald-500 text-white hover:bg-emerald-600 transition-colors duration-200"
+                onClick={handleConfirmYes}
+              >
+                Yes
+              </div>
+              <div
+                className="rounded-xl px-6 py-2 text-xl cursor-pointer select-none bg-rose-500 text-white hover:bg-rose-600 transition-colors duration-200"
+                onClick={() => setShowConfirmDialog(false)}
+              >
+                No
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div
         className="flex flex-col items-center min-h-[calc(100dvh-(--spacing(16)))] p-2 justify-center"
         style={{ touchAction: 'none' }}

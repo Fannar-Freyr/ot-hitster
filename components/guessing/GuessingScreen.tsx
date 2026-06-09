@@ -12,12 +12,15 @@ import { insertSongOwners } from '@/utils/db/songOwners';
 import { getSpotifyToken } from '@/utils/spotify';
 import { motion } from 'motion/react';
 import PageContainer from '../PageContainer';
+import { getPaletteSync } from 'colorthief';
+import { useBackground } from '@/context/BackgroundContext';
 
 // Persisted across remounts so the Spotify device stays registered and ready.
 let cachedPlayer: any = null;
 let cachedDeviceId: string | null = null;
 
 export default function GuessingScreen({ gameId }: { gameId: string }) {
+  const { setColors } = useBackground();
   const [players, setPlayers] = useState<any[]>([]);
   const [currentSong, setCurrentSong] = useState<any>(null);
   const [currentRound, setCurrentRound] = useState<any>(null);
@@ -27,9 +30,39 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
   const lastPlayedSongIdRef = useRef<string | null>(null);
 
   const fetchSong = async (songId: string) => {
-    getSong(songId).then(song => {
-      setCurrentSong(song);
-    });
+    const song = await getSong(songId);
+    if (!song) return;
+    setCurrentSong(song);
+
+    // Derive background colors from the album artwork.
+    try {
+      const token = await getSpotifyToken();
+      const res = await fetch(`https://api.spotify.com/v1/tracks/${song.spotify_id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = data.album.images[0].url;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+      const palette = getPaletteSync(img, { colorCount: 5 });
+      if (!palette) return;
+      setColors([
+        palette[0].array(),
+        palette[1].array(),
+        palette[2].array(),
+        palette[3].array(),
+        palette[0].array(),
+        palette[1].array(),
+        palette[2].array(),
+        palette[3].array(),
+      ]);
+    } catch (e) {
+      console.error('Could not extract palette for guessing screen', e);
+    }
   };
 
   const checkGuesses = () => {
@@ -219,7 +252,6 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
 
   const reveal = async () => {
     checkGuesses();
-    // playerRef.current.pause();
     handleGameStatusChange({ gameId });
   };
 
@@ -230,13 +262,9 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
           Reveal
         </Button>
       </div>
-      <h1 className="text-5xl font-bold mb-4">[ Cool animation or something ]</h1>
-
-      {/* {currentSong && (
-        <h1 className="text-lg font-bold mb-4">
-          {currentSong.title} - {currentSong.artist} - {currentSong.year} 🤫
-        </h1>
-      )} */}
+      <h1 className="text-5xl text-white font-bold mb-4">
+        [ Cool animation or something ]
+      </h1>
       <div className="flex gap-3 mb-6">
         <Button
           className="bg-yellow-500 hover:bg-yellow-400 text-white px-6 py-2"
@@ -246,15 +274,22 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
           {isPlaying ? '⏸ Pause' : '▶ Resume'}
         </Button>
       </div>
-      <div className="flex flex-row flex-wrap justify-center fixed bottom-4">
-        {players
-          .filter(player => !player.is_dj)
-          .map(player => (
-            <TeamCard
-              key={player.id}
-              name={`${player.has_confirmed ? '🔒' : '🔓'} ${player.name}`}
-            />
-          ))}
+      <div className="flex flex-col justify-center items-center fixed bottom-4">
+        {players.filter(player => !player.is_dj).every(p => p.has_confirmed) && (
+          <div className="text-4xl bg-white rounded-lg font-bold mb-4 py-2 px-3">
+            Everybody is ready!
+          </div>
+        )}
+        <div className="flex flex-row flex-wrap justify-center">
+          {players
+            .filter(player => !player.is_dj)
+            .map(player => (
+              <TeamCard
+                key={player.id}
+                name={`${player.has_confirmed ? '🔒' : '🔓'} ${player.name}`}
+              />
+            ))}
+        </div>
       </div>
     </PageContainer>
   );

@@ -14,6 +14,8 @@ import RevealPlayer from '@/components/reveal/RevealPlayer';
 import LeaderboardScreen from '@/components/leaderboard/LeaderboardScreen';
 import GameOverScreen from '@/components/gameOver/GameOverScreen';
 import GameOverPlayer from '@/components/gameOver/GameOverPlayer';
+import { BackgroundProvider } from '@/context/BackgroundContext';
+import { CanvasBackground } from '@/components/CanvasBackground';
 
 export default function GamePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug: gameId } = use(params);
@@ -63,38 +65,47 @@ export default function GamePage({ params }: { params: Promise<{ slug: string }>
     return <Loading />;
   }
 
-  switch (game.status) {
-    case 'lobby':
-      return player.is_dj ? (
-        <LobbyScreen gameId={gameId} game={game} />
-      ) : (
-        <LobbyPlayer gameId={gameId} playerId={player.id} />
-      );
-    case 'guessing':
-      return player.is_dj ? (
-        <GuessingScreen gameId={gameId} />
-      ) : (
-        <GuessingPlayer gameId={gameId} playerId={player.id} />
-      );
-    case 'reveal':
-      return player.is_dj ? (
-        <RevealScreen gameId={gameId} game={game} />
-      ) : (
-        <RevealPlayer gameId={gameId} game={game} playerId={player.id} />
-      );
-    case 'leaderboard':
-      return player.is_dj ? (
-        <LeaderboardScreen gameId={gameId} game={game} />
-      ) : (
-        <RevealPlayer gameId={gameId} game={game} playerId={player.id} />
-      );
-    case 'game_over':
-      return player.is_dj ? (
-        <GameOverScreen gameId={gameId} game={game} />
-      ) : (
-        <GameOverPlayer gameId={gameId} game={game} playerId={player.id} />
-      );
-    default:
-      return <h1 className="text-6xl font-bold mb-4">{'Unknown game state'}</h1>;
-  }
+  const screenContent = (() => {
+    switch (game.status) {
+      case 'lobby':
+        return player.is_dj ? (
+          <LobbyScreen gameId={gameId} game={game} />
+        ) : (
+          <LobbyPlayer gameId={gameId} playerId={player.id} />
+        );
+      case 'guessing':
+        return player.is_dj ? (
+          <GuessingScreen gameId={gameId} />
+        ) : (
+          <GuessingPlayer gameId={gameId} playerId={player.id} />
+        );
+      case 'reveal':
+        return player.is_dj ? (
+          <RevealScreen gameId={gameId} game={game} />
+        ) : (
+          <RevealPlayer gameId={gameId} game={game} playerId={player.id} />
+        );
+      case 'leaderboard':
+        return player.is_dj ? (
+          <LeaderboardScreen gameId={gameId} game={game} />
+        ) : (
+          <RevealPlayer gameId={gameId} game={game} playerId={player.id} />
+        );
+      case 'game_over':
+        return player.is_dj ? (
+          <GameOverScreen gameId={gameId} game={game} />
+        ) : (
+          <GameOverPlayer gameId={gameId} game={game} playerId={player.id} />
+        );
+      default:
+        return <h1 className="text-6xl font-bold mb-4">{'Unknown game state'}</h1>;
+    }
+  })();
+
+  return (
+    <BackgroundProvider>
+      {player.is_dj && <CanvasBackground />}
+      <div className="relative z-10">{screenContent}</div>
+    </BackgroundProvider>
+  );
 }
