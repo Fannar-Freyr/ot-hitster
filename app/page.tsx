@@ -9,6 +9,7 @@ import { AnimatePresence } from 'motion/react';
 export default function Lobby() {
   const [name, setName] = useState<string>('');
   const [hostId, setHostId] = useState<string>('');
+  const [error, setError] = useState<boolean>(false);
   const router = useRouter();
 
   const createGame = async () => {
@@ -46,6 +47,7 @@ export default function Lobby() {
 
     if (!game) {
       console.error('Game not found');
+      setError(true);
       return;
     }
 
@@ -84,6 +86,9 @@ export default function Lobby() {
 
         <h1 className="text-4xl font-bold mb-4 pt-8">Choose team name</h1>
         <input type="text" onChange={e => setName(e.target.value)} />
+        <p className={`text-red-500 mt-4 ${error ? 'block' : 'hidden'}`}>
+          Game not found
+        </p>
         <Button onClick={joinGame}>Join game</Button>
       </div>
     </>

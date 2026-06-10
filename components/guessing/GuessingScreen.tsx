@@ -4,6 +4,7 @@ import Button from '../Button';
 import { useEffect, useRef, useState } from 'react';
 import TeamCard from '../TeamCard';
 import { fetchPlayers, updatePlayerScore } from '@/utils/db/players';
+import { usePlayerEmojis } from '@/hooks/usePlayerEmojis';
 import { getCurrentRound } from '@/utils/db/rounds';
 import { handleGameStatusChange } from '@/utils/gameManager';
 import { getSong } from '@/utils/db/songs';
@@ -26,6 +27,7 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
   const [currentRound, setCurrentRound] = useState<any>(null);
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const { playerEmojis, addEmoji, removeEmoji } = usePlayerEmojis();
   const playerRef = useRef<any>(null);
   const lastPlayedSongIdRef = useRef<string | null>(null);
 
@@ -179,6 +181,17 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
     };
   }, []);
 
+  // Proactively refresh the Spotify token every 50 minutes to prevent expiry mid-game.
+  useEffect(() => {
+    const interval = setInterval(
+      () => {
+        getSpotifyToken();
+      },
+      50 * 60 * 1000,
+    );
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     fetchPlayers({ gameId }).then(fetchedPlayers => {
       setPlayers(fetchedPlayers || []);
@@ -213,6 +226,9 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
           ),
         );
       })
+      .on('broadcast', { event: 'emoji_reaction' }, message => {
+        addEmoji(message.payload.playerId, message.payload.emoji);
+      })
       .subscribe();
 
     return () => {
@@ -220,21 +236,36 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
     };
   }, [gameId]);
 
-  const play = async () => {
-    if (!deviceId || !currentSong) return;
+  const play = async (isRetry = false) => {
+    if (!currentSong) return;
+    const currentDeviceId = cachedDeviceId;
+    if (!currentDeviceId) return;
+
     const spotifyToken = await getSpotifyToken();
     if (!spotifyToken) return;
 
     const trackUri = `spotify:track:${currentSong.spotify_id}`;
 
-    await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${spotifyToken}`,
-        'Content-Type': 'application/json',
+    const res = await fetch(
+      `https://api.spotify.com/v1/me/player/play?device_id=${currentDeviceId}`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${spotifyToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ uris: [trackUri] }),
       },
-      body: JSON.stringify({ uris: [trackUri] }),
-    });
+    );
+
+    if (res.status === 404 && !isRetry && playerRef.current) {
+      console.warn('Spotify device not found — reconnecting and retrying...');
+      await playerRef.current.connect();
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      play(true);
+      return;
+    }
+
     console.log(trackUri, 'song is playing');
   };
   const togglePlayPause = () => {
@@ -258,9 +289,7 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
   return (
     <PageContainer>
       <div className="fixed top-0 right-0 p-4">
-        <Button className="bg-slate-600 text-amber-200" onClick={reveal}>
-          Reveal
-        </Button>
+        <Button onClick={reveal}>Reveal</Button>
       </div>
       <h1 className="text-5xl text-white font-bold mb-4">
         [ Cool animation or something ]
@@ -275,18 +304,26 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
         </Button>
       </div>
       <div className="flex flex-col justify-center items-center fixed bottom-4">
-        {players.filter(player => !player.is_dj).every(p => p.has_confirmed) && (
+        {/* {players.filter(player => !player.is_dj).every(p => p.has_confirmed) && (
           <div className="text-4xl bg-white rounded-lg font-bold mb-4 py-2 px-3">
             Everybody is ready!
           </div>
-        )}
+        )} */}
         <div className="flex flex-row flex-wrap justify-center">
           {players
             .filter(player => !player.is_dj)
             .map(player => (
               <TeamCard
                 key={player.id}
-                name={`${player.has_confirmed ? '🔒' : '🔓'} ${player.name}`}
+                name={player.name}
+                className={
+                  !player.has_confirmed
+                    ? 'text-white border-2 border-white bg-transparent'
+                    : undefined
+                }
+                confirmed={player.has_confirmed ?? false}
+                activeEmojis={playerEmojis[player.id] ?? []}
+                onEmojiDone={emojiId => removeEmoji(player.id, emojiId)}
               />
             ))}
         </div>

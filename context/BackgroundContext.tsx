@@ -3,10 +3,14 @@ import { createContext, useContext, useState } from 'react';
 import type { ShaderColors } from '@/components/CanvasBackground';
 
 const DEFAULT_COLORS: ShaderColors = [
-  [299, 186, 137], // amberYellow
-  [49, 98, 238], // deepBlue
-  [246, 146, 146], // pink
-  [89, 181, 243], // blue
+  // [299, 186, 137], // amberYellow
+  // [49, 98, 238], // deepBlue
+  // [246, 146, 146], // pink
+  // [89, 181, 243], // blue
+  [105, 49, 245], // purpleHaze
+  [32, 42, 50], // swampyBlack
+  [233, 51, 52], // persimmonOrange
+  [233, 160, 75], // darkAmber
   [105, 49, 245], // purpleHaze
   [32, 42, 50], // swampyBlack
   [233, 51, 52], // persimmonOrange

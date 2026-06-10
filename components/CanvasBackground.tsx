@@ -19,7 +19,7 @@ export function CanvasBackground() {
 
     // Resize handling
     const resize = () => {
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = 0.1; //Math.min(window.devicePixelRatio || 1, 1.5);
       const width = window.innerWidth;
       const height = window.innerHeight;
 
@@ -44,21 +44,17 @@ export function CanvasBackground() {
 
     // stolen from here https://www.shadertoy.com/view/DdcfzH
     const fragmentShaderSource = `
-     precision highp float;
+     precision mediump float;
 
 uniform vec2 u_resolution;
 uniform float u_time;
 
-uniform vec3 u_color0; // amberYellow
-uniform vec3 u_color1; // deepBlue
-uniform vec3 u_color2; // pink
-uniform vec3 u_color3; // blue
-uniform vec3 u_color4; // purpleHaze
-uniform vec3 u_color5; // swampyBlack
-uniform vec3 u_color6; // persimmonOrange
-uniform vec3 u_color7; // darkAmber
+uniform vec3 u_color0;
+uniform vec3 u_color1;
+uniform vec3 u_color2;
+uniform vec3 u_color3;
 
-#define filmGrainIntensity 0.05
+#define filmGrainIntensity 0.025
 
 mat2 Rot(float a) {
     float s = sin(a);
@@ -67,11 +63,9 @@ mat2 Rot(float a) {
 }
 
 vec2 hash(vec2 p) {
-    p = vec2(
-        dot(p, vec2(2127.1, 81.17)),
-        dot(p, vec2(1269.5, 283.37))
-    );
-    return fract(sin(p) * 43758.5453);
+    p = fract(p * vec2(443.897, 441.423));
+    p += dot(p, p.yx + 19.19);
+    return fract((p.xx + p.yx) * p.xy);
 }
 
 float noise(vec2 p) {
@@ -122,28 +116,29 @@ void main() {
     tuv.x += sin(tuv.y * frequency + speed) / amplitude;
     tuv.y += sin(tuv.x * frequency * 1.5 + speed) / (amplitude * 0.5);
 
-    float cycle = sin(u_time * 0.5);
-    float t = (sign(cycle) * pow(abs(cycle), 0.6) + 1.0) / 2.0;
+    
 
-    vec3 color1 = mix(u_color0, u_color4, t);
-    vec3 color2 = mix(u_color1, u_color5, t);
-    vec3 color3 = mix(u_color2, u_color6, t);
-    vec3 color4 = mix(u_color3, u_color7, t);
+    vec3 color1 = u_color0;
+    vec3 color2 = u_color1;
+    vec3 color3 = u_color2;
+    vec3 color4 = u_color3;
+
+    vec2 rotatedTuv = tuv * Rot(radians(-5.0));
 
     vec3 layer1 = mix(
         color3, color2,
-        smoothstep(-0.3, 0.2, (tuv * Rot(radians(-5.0))).x)
+        smoothstep(-0.3, 0.2, rotatedTuv.x)
     );
 
     vec3 layer2 = mix(
         color4, color1,
-        smoothstep(-0.3, 0.2, (tuv * Rot(radians(-5.0))).x)
+        smoothstep(-0.3, 0.2, rotatedTuv.x)
     );
 
     vec3 color = mix(layer1, layer2, smoothstep(0.5, -0.3, tuv.y));
 
     // Film grain
-    color -= filmGrainNoise(uv) * filmGrainIntensity;
+    //color -= filmGrainNoise(uv) * filmGrainIntensity;
 
     gl_FragColor = vec4(color, 1.0);
 }
@@ -187,7 +182,7 @@ void main() {
     const resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
 
     // Cache color uniform locations and set initial values.
-    colorLocsRef.current = Array.from({ length: 8 }, (_, i) =>
+    colorLocsRef.current = Array.from({ length: 4 }, (_, i) =>
       gl.getUniformLocation(program, `u_color${i}`),
     );
     glRef.current = gl;

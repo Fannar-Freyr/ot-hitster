@@ -7,6 +7,8 @@ import { useEffect, useState } from 'react';
 import Button from '../Button';
 import { supabase } from '@/utils/db/supabase';
 import { fetchPlayerSongs } from '@/utils/db/songOwners';
+import EmojiPicker from '@/components/EmojiPicker';
+import { useEmojiSender } from '@/hooks/useEmojiSender';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export default function GuessingPlayer({
@@ -45,6 +47,11 @@ export default function GuessingPlayer({
     });
   };
 
+  const { sendEmoji } = useEmojiSender({
+    channelName: `guessing-screen-${gameId}`,
+    playerId,
+  });
+
   const handleGuessing = () => {
     supabase.channel(`guessing-screen-${gameId}`).send({
       type: 'broadcast',
@@ -65,6 +72,15 @@ export default function GuessingPlayer({
       });
     }
   }, [gameId, playerId]);
+
+  if (hasConfirmed) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <p className="text-3xl font-bold text-black">Confirmed!</p>
+        <EmojiPicker onEmojiSelect={sendEmoji} />
+      </div>
+    );
+  }
 
   return (
     <DragDropProvider
@@ -133,16 +149,23 @@ export default function GuessingPlayer({
         className="flex flex-col items-center min-h-[calc(100dvh-(--spacing(16)))] p-2 justify-center"
         style={{ touchAction: 'none' }}
       >
-        <div className="flex justify-center items-center h-16 bg-black text-white w-full fixed bottom-0">
-          <div className="text-lg font-bold">
-            {guess.length === 0 ? (
-              'Make your guess!'
-            ) : (
-              <Button onClick={handleConfirm}>
-                {hasConfirmed ? 'Confirmed!' : 'Confirm'}
-              </Button>
-            )}
-          </div>
+        <div
+          className="flex justify-center items-center bg-black text-white w-full fixed bottom-0 transition-all duration-300"
+          style={{ height: '4rem' }}
+        >
+          {hasConfirmed ? (
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-lg font-bold">Confirmed!</span>
+            </div>
+          ) : (
+            <div className="text-lg font-bold">
+              {guess.length === 0 ? (
+                'Make your guess!'
+              ) : (
+                <Button onClick={handleConfirm}>Confirm</Button>
+              )}
+            </div>
+          )}
         </div>
         <Hand>
           <Card key="empty" title={emptyTitle} year={0} id="empty" index={0} emptyCard />

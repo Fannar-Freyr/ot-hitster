@@ -33,7 +33,7 @@ input {
   font-size: 1.25rem;
   border-radius: 0.75rem;
 }
-
+/* 
 button {
   background: var(--foreground);
   color: var(--background);
@@ -43,4 +43,4 @@ button {
   font-size: 1.25rem;
   cursor: pointer;
   border-radius: 0.75rem;
-}
+} */

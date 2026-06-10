@@ -17,10 +17,14 @@ export function LeaderboardEntry({
   name,
   score,
   gotPoint,
+  finalScores = false,
+  index = 0,
 }: {
   name: string;
   score: number;
   gotPoint: boolean;
+  finalScores?: boolean;
+  index?: number;
 }) {
   const [displayScore, setDisplayScore] = useState(score);
   const count = useMotionValue(score * 100);
@@ -39,6 +43,29 @@ export function LeaderboardEntry({
       };
     }
   }, []);
+
+  const crownPlayer = (name: string, index: number) => {
+    if (index === 0) return `${name} 👑`;
+    if (index === 1) return `${name} 🥈`;
+    if (index === 2) return `${name} 🥉`;
+    return name;
+  };
+
+  if (finalScores) {
+    return (
+      <motion.div
+        initial={{ scaleY: 0.8 }}
+        animate={{ scaleY: 1 }}
+        layout
+        className="w-full flex flex-row"
+      >
+        <motion.div className="flex justify-between flex-1 py-6 px-8 text-5xl text-white text-shadow-lg bg-[#ffffff0a]  border border-[#ffffff34] border-2 rounded-lg font-bold">
+          <span>{crownPlayer(name, index)}</span>
+          <motion.span>{rounded}</motion.span>
+        </motion.div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
