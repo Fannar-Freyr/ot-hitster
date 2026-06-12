@@ -76,7 +76,11 @@ export default function LobbyScreen({ gameId, game }: { gameId: string; game: an
         pressedIt(message.payload.playerId);
       })
       .on('broadcast', { event: 'emoji_reaction' }, message => {
-        addEmoji(message.payload.playerId, message.payload.emoji);
+        addEmoji(
+          message.payload.playerId,
+          message.payload.emoji,
+          -50 + Math.random() * 100,
+        );
       })
       .subscribe();
 

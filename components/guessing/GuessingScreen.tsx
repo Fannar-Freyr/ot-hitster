@@ -15,6 +15,7 @@ import { motion } from 'motion/react';
 import PageContainer from '../PageContainer';
 import { getPaletteSync } from 'colorthief';
 import { useBackground } from '@/context/BackgroundContext';
+import MusicVisualizer from './MusicVisualizer';
 
 // Persisted across remounts so the Spotify device stays registered and ready.
 let cachedPlayer: any = null;
@@ -227,7 +228,11 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
         );
       })
       .on('broadcast', { event: 'emoji_reaction' }, message => {
-        addEmoji(message.payload.playerId, message.payload.emoji);
+        addEmoji(
+          message.payload.playerId,
+          message.payload.emoji,
+          -50 + Math.random() * 100,
+        );
       })
       .subscribe();
 
@@ -290,19 +295,12 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
     <PageContainer>
       <div className="fixed top-0 right-0 p-4">
         <Button onClick={reveal}>Reveal</Button>
-      </div>
-      <h1 className="text-5xl text-white font-bold mb-4">
-        [ Cool animation or something ]
-      </h1>
-      <div className="flex gap-3 mb-6">
-        <Button
-          className="bg-yellow-500 hover:bg-yellow-400 text-white px-6 py-2"
-          onClick={togglePlayPause}
-          disabled={!deviceId}
-        >
-          {isPlaying ? '⏸ Pause' : '▶ Resume'}
+        <Button className=" text-center" onClick={togglePlayPause} disabled={!deviceId}>
+          {isPlaying ? '⏸' : '▶'}
         </Button>
       </div>
+      <MusicVisualizer />
+      <div className="flex gap-3 mb-6"></div>
       <div className="flex flex-col justify-center items-center fixed bottom-4">
         {/* {players.filter(player => !player.is_dj).every(p => p.has_confirmed) && (
           <div className="text-4xl bg-white rounded-lg font-bold mb-4 py-2 px-3">

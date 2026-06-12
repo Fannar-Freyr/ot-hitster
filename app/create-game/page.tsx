@@ -27,7 +27,6 @@ export default function CreateGame() {
     setSpotifyPlaylists(
       data.items.sort((a: any, b: any) => a.name.localeCompare(b.name)),
     );
-    console.log(data);
   };
 
   // TODO: Fetch longer playlists. Currently only fetches 100 songs.

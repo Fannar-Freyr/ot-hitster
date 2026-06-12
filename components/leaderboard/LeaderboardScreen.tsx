@@ -46,18 +46,12 @@ export default function LeaderboardScreen({
   const [showCurrentScores, setShowCurrentScores] = useState(false);
 
   useEffect(() => {
-    // Use dummy data for testing (replace with real fetch)
-    // setPlayers(DUMMY_PLAYERS);
-    //Uncomment to use real data:
     fetchPlayers({ gameId }).then(players => {
       setPlayers(players || []);
     });
   }, []);
 
   useEffect(() => {
-    // Use dummy guesses for testing (replace with real fetch)
-    // setLastRound(DUMMY_GUESSES);
-    //Uncomment to use real data:
     getGuessesForRound({ gameId, round: game.round }).then(guesses => {
       setLastRound(guesses);
     });

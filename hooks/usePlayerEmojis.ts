@@ -4,11 +4,11 @@ import type { EmojiReaction } from '@/components/TeamCard';
 export function usePlayerEmojis() {
 	const [playerEmojis, setPlayerEmojis] = useState<Record<string, EmojiReaction[]>>({});
 
-	const addEmoji = (playerId: string, emoji: string) => {
+	const addEmoji = (playerId: string, emoji: string, offset: number) => {
 		const id = `${Date.now()}-${Math.random()}`;
 		setPlayerEmojis(prev => ({
 			...prev,
-			[playerId]: [...(prev[playerId] ?? []), { id, emoji }],
+			[playerId]: [...(prev[playerId] ?? []), { id, emoji, offset }],
 		}));
 	};
 

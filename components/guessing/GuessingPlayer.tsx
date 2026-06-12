@@ -104,7 +104,6 @@ export default function GuessingPlayer({
           const index = (source as any).index;
           const start = songs[index - 1];
           const end = songs[index];
-          console.log(guess);
           if (start && end && start.year === end.year) {
             setEmptyTitle(`${start.year}`);
             setGuess([start.year, start.year]);

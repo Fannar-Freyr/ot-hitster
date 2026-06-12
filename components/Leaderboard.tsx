@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 export function Leaderboard({ children }: { children: React.ReactNode }) {
   return (
-    <motion.div layout className="flex flex-col w-450 gap-4">
+    <motion.div layout className="flex flex-col w-325 gap-2">
       {children}
     </motion.div>
   );
@@ -45,11 +45,14 @@ export function LeaderboardEntry({
   }, []);
 
   const crownPlayer = (name: string, index: number) => {
-    if (index === 0) return `${name} 👑`;
-    if (index === 1) return `${name} 🥈`;
-    if (index === 2) return `${name} 🥉`;
+    if (index === 0) return `👑 ${name}`;
+    if (index === 1) return `🥈 ${name}`;
+    if (index === 2) return `🥉 ${name}`;
     return name;
   };
+
+  const textSize = 'text-4xl';
+  const rowStyle = `flex justify-between flex-1 py-3 px-8 ${textSize} text-white text-shadow-lg bg-[#0000000a]  border border-[#0000001e] border-2 rounded-lg font-bold`;
 
   if (finalScores) {
     return (
@@ -59,7 +62,7 @@ export function LeaderboardEntry({
         layout
         className="w-full flex flex-row"
       >
-        <motion.div className="flex justify-between flex-1 py-6 px-8 text-5xl text-white text-shadow-lg bg-[#ffffff0a]  border border-[#ffffff34] border-2 rounded-lg font-bold">
+        <motion.div className={rowStyle}>
           <span>{crownPlayer(name, index)}</span>
           <motion.span>{rounded}</motion.span>
         </motion.div>
@@ -74,7 +77,7 @@ export function LeaderboardEntry({
       layout
       className="w-full flex flex-row"
     >
-      <motion.div className="flex justify-between flex-1 py-6 px-8 text-5xl text-white text-shadow-lg bg-[#ffffff0a]  border border-[#ffffff34] border-2 rounded-lg font-bold">
+      <motion.div className={rowStyle}>
         <span>{name}</span>
         <motion.span>{rounded}</motion.span>
       </motion.div>
@@ -83,12 +86,12 @@ export function LeaderboardEntry({
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: gotScoreDelay }}
-          className="py-6 px-8 text-5xl text-white font-bold w-10 text-shadow-lg"
+          className={`py-4 px-8 ${textSize} text-white font-bold w-10 text-shadow-lg`}
         >
           +100
         </motion.div>
       ) : (
-        <motion.div className="py-6 px-8 text-6xl w-10"></motion.div>
+        <motion.div className={`py-4 px-8 ${textSize} w-10`}></motion.div>
       )}
     </motion.div>
   );

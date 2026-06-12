@@ -8,7 +8,6 @@ interface fetchPlayerSongs {
 }
 
 export const insertSongOwners = async (songOwners: insertSongOwnersProps) => {
-	console.log('Inserting song owners:', songOwners);
 	await supabase
 		.from('song_owners')
 		.insert(songOwners)

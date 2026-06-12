@@ -51,7 +51,6 @@ export default function GamePage({ params }: { params: Promise<{ slug: string }>
         },
         payload => {
           setGame(payload.new);
-          console.log('game updated', payload.new);
         },
       )
       .subscribe();

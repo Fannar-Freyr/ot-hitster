@@ -2,7 +2,7 @@
 import { motion, useAnimation } from 'motion/react';
 import { useEffect } from 'react';
 
-export type EmojiReaction = { id: string; emoji: string };
+export type EmojiReaction = { id: string; emoji: string; offset: number };
 
 export default function TeamCard({
   name,
@@ -19,6 +19,8 @@ export default function TeamCard({
 }) {
   const cardControls = useAnimation();
   const wipeControls = useAnimation();
+  const animationDuration = 2.5;
+  // eslint-disable-next-line react-hooks/purity
 
   useEffect(() => {
     cardControls.start({
@@ -57,16 +59,31 @@ export default function TeamCard({
           {name}
         </span>
       </motion.div>
-      {activeEmojis.map(({ id, emoji }) => (
+      {activeEmojis.map(({ id, emoji, offset }) => (
         <motion.div
           key={id}
           className="absolute bottom-0 left-1/2 -translate-x-1/2 text-4xl pointer-events-none z-50 select-none"
-          initial={{ y: 0, opacity: 1, scale: 0.8, x: 0 }}
-          animate={{ y: -260, opacity: 0, scale: 1.5, x: [0, 18, -14, 20, -10, 8, 0] }}
+          initial={{ y: 0, opacity: 1, scale: 0, x: 0 }}
+          animate={{
+            y: -400,
+            opacity: [1, 1, 0],
+            scale: [0, 1, 1.75],
+            x: [
+              0 + offset,
+              18 + offset,
+              -14 + offset,
+              20 + offset,
+              -10 + offset,
+              8 + offset,
+              0 + offset,
+            ],
+          }}
           transition={{
-            duration: 2.5,
-            ease: 'easeOut',
-            x: { duration: 2.5, ease: 'easeInOut' },
+            duration: animationDuration,
+            ease: 'linear',
+            scale: { duration: animationDuration, times: [0, 0.1, 1] },
+            opacity: { duration: animationDuration, times: [0, 0.9, 1] },
+            x: { duration: animationDuration, ease: 'easeInOut' },
           }}
           onAnimationComplete={() => onEmojiDone?.(id)}
         >

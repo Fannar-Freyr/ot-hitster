@@ -15,7 +15,7 @@ export default function EmojiPicker({
         <button
           key={emoji}
           onClick={() => onEmojiSelect(emoji)}
-          className="text-5xl active:scale-115 bg-white transition-transform duration-100 select-none cursor-pointer p-5 rounded-lg"
+          className="text-5xl active:scale-110 bg-white transition-transform duration-80 select-none cursor-pointer p-5 rounded-lg"
         >
           {emoji}
         </button>

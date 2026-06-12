@@ -1,4 +1,5 @@
 import { getGuess, Guess } from '@/utils/db/guesses';
+import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -16,7 +17,6 @@ export default function RevealPlayer({
   const handleFetchingGuess = () => {
     getGuess({ playerId, gameId, round: game.round }).then((guess: any) => {
       setGuess(guess);
-      console.log(guess);
     });
   };
 
@@ -30,12 +30,16 @@ export default function RevealPlayer({
 
   return (
     <div
-      className={`flex flex-col items-center justify-center min-h-screen py-2 ${guess?.correct ? 'bg-green-500' : 'bg-red-500'}`}
+      className={`flex flex-col items-center justify-center min-h-screen py-2 ${guess?.correct ? 'bg-green-600' : 'bg-red-600'}`}
     >
       {guess ? (
-        <h1 className="text-6xl font-bold mb-4">
-          {guess.correct ? 'Correct!' : 'Wrong'}
-        </h1>
+        <motion.h1
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="text-6xl text-white font-bold mb-4"
+        >
+          {guess.correct ? 'Correct!' : 'Wrong!'}
+        </motion.h1>
       ) : (
         <h1 className="text-6xl font-bold mb-4">Loading your guess...</h1>
       )}
