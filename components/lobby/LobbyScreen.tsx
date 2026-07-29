@@ -15,12 +15,6 @@ export default function LobbyScreen({ gameId, game }: { gameId: string; game: an
   const [players, setPlayers] = useState<any[]>([]);
   const { playerEmojis, addEmoji, removeEmoji } = usePlayerEmojis();
 
-  const pressedIt = (playerId: string) => {
-    setPlayers(prev =>
-      prev.map(p => (p.id === playerId ? { ...p, pressed_it: !p.pressed_it } : p)),
-    );
-  };
-
   const startGame = async () => {
     console.log('start game!!!!');
     const songs = await fetchAllSongs({ gameId });
@@ -72,9 +66,6 @@ export default function LobbyScreen({ gameId, game }: { gameId: string; game: an
           });
         },
       )
-      .on('broadcast', { event: 'pressed_it' }, message => {
-        pressedIt(message.payload.playerId);
-      })
       .on('broadcast', { event: 'emoji_reaction' }, message => {
         addEmoji(
           message.payload.playerId,
@@ -89,45 +80,14 @@ export default function LobbyScreen({ gameId, game }: { gameId: string; game: an
     };
   }, []);
 
-  const addPlayer = () => {
-    const names = [
-      'Team Awesome',
-      'The Hitmakers',
-      'The Chart Toppers',
-      'The Vinyls',
-      'The Mixtapes',
-      'The Groovers',
-      'The Soundwaves',
-      'The Beat Squad',
-      'The Melody Makers',
-      'The Rhythm Riders',
-      'The Harmonizers',
-      'The Tune Masters',
-      'The Music Legends',
-      'The Note Collectors',
-      'The Symphony Squad',
-    ];
-    const name = names[Math.floor(Math.random() * names.length)];
-    setPlayers(prev => [
-      ...prev,
-      {
-        id: `player-${prev.length + 1}`,
-        name: name,
-        pressed_it: false,
-      },
-    ]);
-  };
-
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-2">
       <div className="fixed top-0 right-0 p-4">
         <Button onClick={startGame}>Start game</Button>
-        <Button onClick={addPlayer}>Add team</Button>
       </div>
       <div className="text-6xl font-bold bg-white mb-4 py-4 px-6 rounded-xl fixed mt-8 top-0">
         Game code: {game.host_id}
       </div>
-      {/* <p className="text-2xl">Teams:</p> */}
       <div className="flex flex-row flex-wrap justify-center max-w-300">
         {players.map(player => {
           if (!player.name) return null;

@@ -58,10 +58,6 @@ export default function GuessingScreen({ gameId }: { gameId: string }) {
         palette[1].array(),
         palette[2].array(),
         palette[3].array(),
-        palette[0].array(),
-        palette[1].array(),
-        palette[2].array(),
-        palette[3].array(),
       ]);
     } catch (e) {
       console.error('Could not extract palette for guessing screen', e);

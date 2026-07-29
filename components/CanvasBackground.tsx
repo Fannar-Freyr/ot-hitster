@@ -3,8 +3,7 @@ import { useBackground } from '@/context/BackgroundContext';
 
 export type RGB = [number, number, number];
 
-// Order: amberYellow, deepBlue, pink, blue, purpleHaze, swampyBlack, persimmonOrange, darkAmber
-export type ShaderColors = [RGB, RGB, RGB, RGB, RGB, RGB, RGB, RGB];
+export type ShaderColors = [RGB, RGB, RGB, RGB];
 
 export function CanvasBackground() {
   const { colors } = useBackground();
@@ -42,106 +41,92 @@ export function CanvasBackground() {
       }
     `;
 
-    // stolen from here https://www.shadertoy.com/view/DdcfzH
+    // stolen from here (but modified) https://www.shadertoy.com/view/DdcfzH
     const fragmentShaderSource = `
-     precision mediump float;
+    	precision mediump float;
 
-uniform vec2 u_resolution;
-uniform float u_time;
+			uniform vec2 u_resolution;
+			uniform float u_time;
 
-uniform vec3 u_color0;
-uniform vec3 u_color1;
-uniform vec3 u_color2;
-uniform vec3 u_color3;
+			uniform vec3 u_color0;
+			uniform vec3 u_color1;
+			uniform vec3 u_color2;
+			uniform vec3 u_color3;
 
-#define filmGrainIntensity 0.025
+			#define filmGrainIntensity 0.025
 
-mat2 Rot(float a) {
-    float s = sin(a);
-    float c = cos(a);
-    return mat2(c, -s, s, c);
-}
+			mat2 Rot(float a) {
+					float s = sin(a);
+					float c = cos(a);
+					return mat2(c, -s, s, c);
+			}
 
-vec2 hash(vec2 p) {
-    p = fract(p * vec2(443.897, 441.423));
-    p += dot(p, p.yx + 19.19);
-    return fract((p.xx + p.yx) * p.xy);
-}
+			vec2 hash(vec2 p) {
+					p = fract(p * vec2(443.897, 441.423));
+					p += dot(p, p.yx + 19.19);
+					return fract((p.xx + p.yx) * p.xy);
+			}
 
-float noise(vec2 p) {
-    vec2 i = floor(p);
-    vec2 f = fract(p);
+			float noise(vec2 p) {
+					vec2 i = floor(p);
+					vec2 f = fract(p);
 
-    vec2 u = f * f * (3.0 - 2.0 * f);
+					vec2 u = f * f * (3.0 - 2.0 * f);
 
-    float n = mix(
-        mix(
-            dot(-1.0 + 2.0 * hash(i + vec2(0.0, 0.0)), f - vec2(0.0, 0.0)),
-            dot(-1.0 + 2.0 * hash(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0)),
-            u.x
-        ),
-        mix(
-            dot(-1.0 + 2.0 * hash(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0)),
-            dot(-1.0 + 2.0 * hash(i + vec2(1.0, 1.0)), f - vec2(1.0, 1.0)),
-            u.x
-        ),
-        u.y
-    );
+					float n = mix(
+							mix(
+									dot(-1.0 + 2.0 * hash(i + vec2(0.0, 0.0)), f - vec2(0.0, 0.0)),
+									dot(-1.0 + 2.0 * hash(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0)),
+									u.x
+							),
+							mix(
+									dot(-1.0 + 2.0 * hash(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0)),
+									dot(-1.0 + 2.0 * hash(i + vec2(1.0, 1.0)), f - vec2(1.0, 1.0)),
+									u.x
+							),
+							u.y
+					);
 
-    return 0.5 + 0.5 * n;
-}
+					return 0.5 + 0.5 * n;
+			}
 
-float filmGrainNoise(vec2 uv) {
-    return length(hash(uv));
-}
+			void main() {
+					vec2 fragCoord = gl_FragCoord.xy;
 
-void main() {
-    vec2 fragCoord = gl_FragCoord.xy;
+					vec2 uv = fragCoord / u_resolution;
+					float aspectRatio = u_resolution.x / u_resolution.y;
 
-    vec2 uv = fragCoord / u_resolution;
-    float aspectRatio = u_resolution.x / u_resolution.y;
+					vec2 tuv = uv - 0.5;
 
-    vec2 tuv = uv - 0.5;
+					float degree = noise(vec2(u_time * 0.05, tuv.x * tuv.y));
 
-    float degree = noise(vec2(u_time * 0.05, tuv.x * tuv.y));
+					tuv.y *= 1.0 / aspectRatio;
+					tuv *= Rot(radians((degree - 0.5) * 720.0 + 180.0));
+					tuv.y *= aspectRatio;
 
-    tuv.y *= 1.0 / aspectRatio;
-    tuv *= Rot(radians((degree - 0.5) * 720.0 + 180.0));
-    tuv.y *= aspectRatio;
+					float frequency = 5.0;
+					float amplitude = 30.0;
+					float speed = u_time * 0.002;
 
-    float frequency = 5.0;
-    float amplitude = 30.0;
-    float speed = u_time * 0.002;
+					tuv.x += sin(tuv.y * frequency + speed) / amplitude;
+					tuv.y += sin(tuv.x * frequency * 1.5 + speed) / (amplitude * 0.5);
 
-    tuv.x += sin(tuv.y * frequency + speed) / amplitude;
-    tuv.y += sin(tuv.x * frequency * 1.5 + speed) / (amplitude * 0.5);
+					vec2 rotatedTuv = tuv * Rot(radians(-5.0));
 
-    
+					vec3 layer1 = mix(
+							u_color2, u_color1,
+							smoothstep(-0.3, 0.2, rotatedTuv.x)
+					);
 
-    vec3 color1 = u_color0;
-    vec3 color2 = u_color1;
-    vec3 color3 = u_color2;
-    vec3 color4 = u_color3;
+					vec3 layer2 = mix(
+							u_color3, u_color0,
+							smoothstep(-0.3, 0.2, rotatedTuv.x)
+					);
 
-    vec2 rotatedTuv = tuv * Rot(radians(-5.0));
+					vec3 color = mix(layer1, layer2, smoothstep(0.5, -0.3, tuv.y));
 
-    vec3 layer1 = mix(
-        color3, color2,
-        smoothstep(-0.3, 0.2, rotatedTuv.x)
-    );
-
-    vec3 layer2 = mix(
-        color4, color1,
-        smoothstep(-0.3, 0.2, rotatedTuv.x)
-    );
-
-    vec3 color = mix(layer1, layer2, smoothstep(0.5, -0.3, tuv.y));
-
-    // Film grain
-    //color -= filmGrainNoise(uv) * filmGrainIntensity;
-
-    gl_FragColor = vec4(color, 1.0);
-}
+					gl_FragColor = vec4(color, 1.0);
+			}
     `;
 
     // Helper: compile shader
